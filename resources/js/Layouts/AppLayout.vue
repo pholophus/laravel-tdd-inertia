@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import ApplicationMark from '@/Components/ApplicationMark.vue';
 import Banner from '@/Components/Banner.vue';
 import Dropdown from '@/Components/Dropdown.vue';
@@ -21,6 +21,20 @@ const switchToTeam = (team) => {
         preserveState: false,
     });
 };
+
+const menus = [
+    {
+        name: 'Dashboard',
+        url: route('dashboard'),
+        route: 'dashboard',
+        when: () => usePage().props.auth.user
+    },
+    {
+        name: 'Posts',
+        url: route('posts.index'),
+        route: 'posts.index'
+    }
+]
 
 const logout = () => {
     router.post(route('logout'));
@@ -48,9 +62,19 @@ const logout = () => {
 
                             <!-- Navigation Links -->
                             <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                                    Dashboard
-                                </NavLink>
+                                <template
+                                    v-for="menu in menus"
+                                    :key="menu.name"
+                                >
+                                    <NavLink 
+                                        v-if="menu.when ? menu.when() : true"
+                                        :href="menu.url" 
+                                        :active="route().current(menu.route)"
+                                    >
+                                        {{ menu.name }}
+                                    </NavLink>
+                                </template>
+                                
                             </div>
                         </div>
 
@@ -114,7 +138,7 @@ const logout = () => {
                             </div>
 
                             <!-- Settings Dropdown -->
-                            <div class="ms-3 relative">
+                            <div v-if="$page.props.auth.user" class="ms-3 relative">
                                 <Dropdown align="right" width="48">
                                     <template #trigger>
                                         <button v-if="$page.props.jetstream.managesProfilePhotos" class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition">
@@ -157,6 +181,11 @@ const logout = () => {
                                     </template>
                                 </Dropdown>
                             </div>
+                            <div v-else>
+                                <Link :href="route('login')">
+                                    Login
+                                </Link>
+                            </div>
                         </div>
 
                         <!-- Hamburger -->
@@ -197,7 +226,7 @@ const logout = () => {
                     </div>
 
                     <!-- Responsive Settings Options -->
-                    <div class="pt-4 pb-1 border-t border-gray-200">
+                    <div v-if="$page.props.auth.user" class="pt-4 pb-1 border-t border-gray-200">
                         <div class="flex items-center px-4">
                             <div v-if="$page.props.jetstream.managesProfilePhotos" class="shrink-0 me-3">
                                 <img class="h-10 w-10 rounded-full object-cover" :src="$page.props.auth.user.profile_photo_url" :alt="$page.props.auth.user.name">
